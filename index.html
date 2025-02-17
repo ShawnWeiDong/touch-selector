@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        /* A simple CSS reset that removes the default margin, padding, and border of all elements */
+        * {
+            margin: 0;
+        }
+
+        /*
+          5. Improve media defaults
+        */
+        img,
+        picture,
+        video,
+        canvas,
+        svg {
+            display: block;
+            max-width: 100%;
+        }
+
+        /*
+          6. Remove built-in form typography styles
+        */
+        input,
+        button,
+        textarea,
+        select {
+            font: inherit;
+        }
+
+        /*
+          7. Avoid text overflows
+        */
+        p,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            overflow-wrap: break-word;
+        }
+
+        /*
+          8. Create a root stacking context
+        */
+        #root,
+        #__next {
+            isolation: isolate;
+        }
+
+        code,
+        kbd,
+        samp {
+            font-family: monospace, monospace;
+            /* 1 */
+            font-size: 1em;
+            /* 2 */
+        }
+
+        p {
+            font-family: "Trebuchet MS", Verdana, sans-serif;
+        }
+
+
+
+        @supports (-webkit-touch-callout: none) {
+            body {
+                -webkit-user-select: none;
+                -webkit-tap-highlight-color: transparent;
+                /* Disable tap highlight */
+            }
+        }
+
+        html {
+            -webkit-user-select: none;
+            /* Disable text selection */
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+            /* Disable tap highlight */
+        }
+
+        #cursor {
+            position: absolute;
+            display: none;
+            z-index: 1000;
+        }
+
+        .rectangle {
+            position: absolute;
+            border: 2px solid #0696D7;
+            display: none;
+        }
+
+        /* CSS */
+        #grid-container {
+            position: relative;
+            height: 100vh;
+            width: 100vw;
+            overflow: auto;
+            z-index: 0;
+        }
+
+        .grid-item {
+            position: absolute;
+            border: 1px solid rgba(203, 203, 203, 0.20);
+            box-sizing: border-box;
+            z-index: 0;
+        }
+
+        .grid-item.thick-right {
+            border-right-width: 2px;
+            z-index: 0;
+
+        }
+
+        .grid-item.thick-bottom {
+            border-bottom-width: 2px;
+            z-index: 0;
+        }
+
+        .middle-vertical {
+            border-right-color: green !important;
+            z-index: 100;
+        }
+
+        .middle-horizontal {
+            border-bottom-color: red !important;
+            z-index: 100;
+        }
+
+        .toolbar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 60px;
+            /* Adjust width as needed */
+            height: 100vh;
+            background-color: #F5F5F5;
+            z-index: 1000;
+        }
+
+        .snackbar {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+            z-index: 2000;
+            top: 22px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            /* Add rounded corners */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="snackbar">
+        <p><code>Doubletap + hold</code> to accesss precise
+            cursor.</p>
+    </div>
+    <div class="toolbar">
+        <img src="assets/Toolbar.png" alt="">
+    </div>
+    <svg id="cursor" width="87" height="87" viewBox="0 0 87 87" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <line y1="43.5" x2="38" y2="43.5" stroke="black" />
+        <line x1="49" y1="43.5" x2="87" y2="43.5" stroke="black" />
+        <line x1="43.5" y1="38" x2="43.5" y2="2.18557e-08" stroke="black" />
+        <line x1="43.5" y1="87" x2="43.5" y2="49" stroke="black" />
+        <rect x="38.5" y="38.5" width="10" height="10" stroke="black" />
+    </svg>
+
+    <div id="grid-container"></div>
+
+
+    <script>
+        // Initialize variables
+        var cursor = document.getElementById('cursor');
+        var rectangle = document.getElementById('rectangle');
+        var start = null;
+        var secondTap = false;
+        var tapCount = 0;
+        var tapTimeout = null;
+        var snackbar = document.querySelector('.snackbar'); // Get the snackbar element
+        // Initialize a counter for the rectangles
+        var rectangleCount = 0;
+        var rectangle;
+
+
+
+        // Handle touchstart event
+        document.addEventListener('touchstart', function (e) {
+            e.preventDefault();
+            clearTimeout(tapTimeout);
+            tapCount++;
+    
+
+            // If double tap, display the cursor
+            if (tapCount === 2) {
+                cursor.style.top = (e.touches[0].clientY - 100) + 'px';
+                cursor.style.left = (e.touches[0].clientX - 50) + 'px';
+                cursor.style.display = 'block';
+            }
+
+            if (cursor.style.display === 'block') {
+                snackbar.style.display = 'block';
+                snackbar.innerHTML = '<p>Tap with second finger to place first corner.</p>';
+            }
+
+
+            // If multi-touch, handle rectangle display and position
+            if (e.touches.length > 1) {
+
+                if (start) {
+                    if (secondTap) {
+                        start = null;
+                        secondTap = false;
+                    } else {
+                        secondTap = true;
+
+                    }
+                } else {
+                    // Create a new rectangle if one is not currently being created
+                    if (!rectangle) {
+                        rectangle = document.createElement('div');
+                        rectangle.className = 'rectangle'; // Add class
+                        rectangle.id = 'rectangle' + (++rectangleCount); // Add unique id
+                        rectangle.style.position = 'absolute';
+                        document.body.appendChild(rectangle);
+
+                    }
+
+                    start = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                    rectangle.style.left = (start.x - 8) + 'px';
+                    rectangle.style.top = (start.y - 58) + 'px';
+                    rectangle.style.display = 'block';
+
+                }
+            }
+        });
+
+        // Handle touchmove event
+        document.addEventListener('touchmove', function (e) {
+            e.preventDefault();
+
+
+            cursor.style.top = (e.touches[0].clientY - 100) + 'px';
+            cursor.style.left = (e.touches[0].clientX - 50) + 'px';
+
+            // If start is defined and not secondTap, adjust rectangle size
+            if (start && !secondTap) {
+                rectangle.style.width = (e.touches[0].clientX - start.x) + 'px';
+                rectangle.style.height = (e.touches[0].clientY - start.y) + 'px';
+                snackbar.style.display = 'block';
+                snackbar.innerHTML = '<p>Tap with second finger to place second corner.</p>'; // Update the snackbar text
+            }
+
+        });
+
+        // Handle touchend event
+        document.addEventListener('touchend', function (e) {
+            e.preventDefault();
+
+
+            // Handle tap count and snackbar message
+            if (tapCount < 2) {
+                tapTimeout = setTimeout(function () {
+                    tapCount = 0;
+                }, 300); // 300ms delay to wait for possible second tap
+            } else if (tapCount === 2) {
+                cursor.style.display = 'none';
+                tapCount = 0;
+            }
+
+            // Hide cursor if no touch
+            if (e.touches.length === 0) {
+                cursor.style.display = 'none';
+                snackbar.style.display = 'none';
+                snackbar.style.display = 'block';
+                snackbar.innerHTML = '<p><code>Doubletap + hold</code> to accesss precise cursor.</p>';
+            }
+
+            // If secondTap is true, change the border color of the rectangle
+            if (secondTap) {
+                rectangle.style.background = 'rgba(6, 150, 215, 0.2)'; // Change this to your desired color
+                rectangle = null; // Reset rectangle variable
+
+                if (!rectangle) {
+                    tapCount = 0;
+                    start = null;
+                    secondTap = false;
+                }
+            }
+        });
+
+        // Prevent page refresh on drag
+        window.addEventListener('touchmove', function (e) {
+            e.preventDefault();
+        }, { passive: false }); // Use passive: false to make the preventDefault() call effective
+
+        // Handle window load event
+        window.onload = function () {
+            const gridContainer = document.getElementById('grid-container');
+            const squareSize = Math.floor(Math.min(window.innerWidth, window.innerHeight) / 35);
+            const squaresPerRow = Math.floor(window.innerWidth / squareSize);
+            const squaresPerColumn = Math.floor(window.innerHeight / squareSize);
+
+            // Create grid items
+            for (let y = 0; y < squaresPerColumn; y++) {
+                for (let x = 0; x < squaresPerRow; x++) {
+                    const div = document.createElement('div');
+                    div.classList.add('grid-item');
+                    if ((x + 1) % 5 === 0) div.classList.add('thick-right');
+                    if ((y + 1) % 5 === 0) div.classList.add('thick-bottom');
+                    if (x === Math.floor(squaresPerRow / 2)) div.classList.add('middle-vertical');
+                    if (y === Math.floor(squaresPerColumn / 2)) div.classList.add('middle-horizontal');
+                    div.style.width = `${squareSize}px`;
+                    div.style.height = `${squareSize}px`;
+                    div.style.left = `${x * squareSize}px`;
+                    div.style.top = `${y * squareSize}px`;
+                    gridContainer.appendChild(div);
+                }
+            }
+        };
+    </script>
+</body>
+
+</html>
