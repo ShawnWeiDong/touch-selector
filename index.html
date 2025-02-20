@@ -122,11 +122,11 @@
             padding: 8px 12px;
             z-index: 2000;
             border-radius: 4px;
-            min-height: 60px;
+            min-height: 40px;
             max-height: 140px;
             display: flex;
             align-items: center;
-            font-size: 24px !important;
+            font-size: 18px !important;
         }
         .snackbar p {
             margin: 0;
@@ -192,6 +192,15 @@
             display: flex;       /* 添加 flex 布局以便于内部元素排列*/
             justify-content: center;  /* 水平居中内部元素*/
             align-items: center;     /* 垂直居中内部元素*/
+            gap: 16px;  /* 圆形之间的间距 */
+        }
+
+        .toolbar .circle {
+            width: 24px;
+            height: 24px;
+            border: 1px dashed #808080;
+            border-radius: 50%;
+            box-sizing: border-box;
         }
         
         
@@ -206,7 +215,13 @@
         <p><code>Doubletap + hold</code> to accesss precise
             cursor.</p>
     </div>
-    <div class="toolbar">
+    <div class="toolbar" style="justify-content: flex-start; padding-left: 20px;">
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
     </div>
     <div class="face">
     </div>
@@ -252,11 +267,12 @@
 
             if (cursor.style.display === 'block') {
                 snackbar.style.display = 'block';
-                snackbar.innerHTML = '<p>Tap with second finger to place first corner.</p>';
+                snackbar.innerHTML = '<p>slide to hover over the face.</p>';
             }
 
 
             // If multi-touch, handle rectangle display and position
+           /*
             if (e.touches.length > 1) {
 
                 if (start) {
@@ -285,6 +301,7 @@
 
                 }
             }
+            */
         });
         // 检查cursor是否与face边界重合的函数
         function checkCursorOverlap() {
@@ -307,6 +324,14 @@
                 const onTopEdge = Math.abs(cursorY - faceTop) <= 2;
                 const onBottomEdge = Math.abs(cursorY - (faceTop + faceHeight)) <= 2;
                 
+                // 如果cursor位于face之上，更改face颜色
+                if (cursorX >= faceLeft && cursorX <= faceLeft + faceWidth &&
+                    cursorY >= faceTop && cursorY <= faceTop + faceHeight) {
+                    face.style.backgroundColor = '#ababa9'; // 改为红色
+                } else {
+                    face.style.backgroundColor = '#7e7e7e'; // 恢复原来的颜色
+                }
+
                 // 如果与任意边界重合，创建边界指示器
                 face.style.borderWidth = '2px';
                 face.style.borderStyle = 'solid';
@@ -391,7 +416,7 @@
                 rectangle.style.width = (e.touches[0].clientX - start.x) + 'px';
                 rectangle.style.height = (e.touches[0].clientY - start.y) + 'px';
                 snackbar.style.display = 'block';
-                snackbar.innerHTML = '<p>Tap with second finger to place second corner.</p>'; // Update the snackbar text
+                snackbar.innerHTML = '<p>slide to hover over the face.</p>'; // Update the snackbar text
             }
 
         });
