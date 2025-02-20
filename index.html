@@ -2,6 +2,8 @@
 <html>
 
 <head>
+     <!-- 检查 viewport 设置是否正确 -->
+     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         /* A simple CSS reset that removes the default margin, padding, and border of all elements */
         * {
@@ -90,9 +92,56 @@
 
         .rectangle {
             position: absolute;
-            border: 2px solid #0696D7;
+            border: 1px solid #0696D7;
             display: none;
         }
+
+        .face{
+            position:absolute;
+            border: 2px solid #000000;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #7e7e7e;    /* 添加填充色，使用与边框相同的颜色*/
+            width: 200px;
+            height: 200px;
+            box-sizing: border-box;
+            z-index: 1000;
+    /* 或者使用半透明填充色 */
+        }
+
+        .snackbar {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgb(255, 255, 255);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            width: calc(100% - 128px);  /*两边各64px的边距*/
+            max-width: 600px;           /* 可选：设置最大宽度*/
+            padding: 8px 12px;
+            z-index: 2000;
+            border-radius: 4px;
+            min-height: 60px;
+            max-height: 140px;
+            display: flex;
+            align-items: center;
+            font-size: 24px !important;
+        }
+        .snackbar p {
+            margin: 0;
+            width: 100%;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;       /*显示行数*/
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-align: center;
+          }
+
+        .snackbar code {
+              vertical-align: middle;  /* code 标签垂直对齐*/
+          }
+
 
         /* CSS */
         #grid-container {
@@ -134,27 +183,21 @@
         .toolbar {
             position: fixed;
             left: 0;
-            top: 0;
-            width: 60px;
+            bottom: 0;
+            width: 100%;
+            height: 60px;
             /* Adjust width as needed */
-            height: 100vh;
             background-color: #F5F5F5;
             z-index: 1000;
+            display: flex;       /* 添加 flex 布局以便于内部元素排列*/
+            justify-content: center;  /* 水平居中内部元素*/
+            align-items: center;     /* 垂直居中内部元素*/
         }
+        
+        
 
-        .snackbar {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            max-width: 300px;
-            z-index: 2000;
-            top: 22px;
-            padding: 8px 12px;
-            border-radius: 4px;
-            /* Add rounded corners */
-        }
+       
+
     </style>
 </head>
 
@@ -164,7 +207,8 @@
             cursor.</p>
     </div>
     <div class="toolbar">
-        <img src="assets/Toolbar.png" alt="">
+    </div>
+    <div class="face">
     </div>
     <svg id="cursor" width="87" height="87" viewBox="0 0 87 87" fill="none" xmlns="http://www.w3.org/2000/svg">
         <line y1="43.5" x2="38" y2="43.5" stroke="black" />
@@ -242,6 +286,97 @@
                 }
             }
         });
+        // 检查cursor是否与face边界重合的函数
+        function checkCursorOverlap() {
+            const face = document.querySelector('.face');
+            if (cursor.style.display === 'block' && face) {
+                // 获取cursor中心点坐标
+                const cursorX = parseInt(cursor.style.left) + 43; // cursor宽度的一半
+                const cursorY = parseInt(cursor.style.top) + 43; // cursor高度的一半
+                
+                // 获取face的位置和尺寸
+                const faceRect = face.getBoundingClientRect();
+                const faceLeft = faceRect.left;
+                const faceTop = faceRect.top;
+                const faceWidth = faceRect.width;
+                const faceHeight = faceRect.height;
+                
+                // 检查是否与face边界重合（允许2px的误差）
+                const onLeftEdge = Math.abs(cursorX - faceLeft) <= 2;
+                const onRightEdge = Math.abs(cursorX - (faceLeft + faceWidth)) <= 2;
+                const onTopEdge = Math.abs(cursorY - faceTop) <= 2;
+                const onBottomEdge = Math.abs(cursorY - (faceTop + faceHeight)) <= 2;
+                
+                // 如果与任意边界重合，创建边界指示器
+                face.style.borderWidth = '2px';
+                face.style.borderStyle = 'solid';
+                face.style.borderColor = '#000000';
+
+                // 移除所有已存在的边界指示器
+                const oldIndicators = document.querySelectorAll('.edge-indicator');
+                oldIndicators.forEach(indicator => indicator.remove());
+
+                if (onLeftEdge) {
+                    const leftIndicator = document.createElement('div');
+                    leftIndicator.className = 'edge-indicator';
+                    leftIndicator.style.position = 'absolute';
+                    leftIndicator.style.left = (faceLeft - 2) + 'px';
+                    leftIndicator.style.top = (faceTop) + 'px';
+                    leftIndicator.style.width = '4px';
+                    leftIndicator.style.height = '200px';
+                    leftIndicator.style.backgroundColor = '#000000';
+                    leftIndicator.style.boxShadow = '0 0 8px #ffffff';
+                    leftIndicator.style.zIndex = '1500';
+                    document.body.appendChild(leftIndicator);
+                }
+                if (onRightEdge) {
+                    const rightIndicator = document.createElement('div');
+                    rightIndicator.className = 'edge-indicator';
+                    rightIndicator.style.position = 'absolute';
+                    rightIndicator.style.left = (faceLeft + faceWidth - 2) + 'px';
+                    rightIndicator.style.top = (faceTop) + 'px';
+                    rightIndicator.style.width = '4px';
+                    rightIndicator.style.height = '200px';
+                    rightIndicator.style.backgroundColor = '#000000';
+                    rightIndicator.style.boxShadow = '0 0 8px #ffffff';
+                    rightIndicator.style.zIndex = '1500';
+                    document.body.appendChild(rightIndicator);
+                }
+                if (onTopEdge) {
+                    const topIndicator = document.createElement('div');
+                    topIndicator.className = 'edge-indicator';
+                    topIndicator.style.position = 'absolute';
+                    topIndicator.style.left = (faceLeft) + 'px';
+                    topIndicator.style.top = (faceTop - 2) + 'px';
+                    topIndicator.style.width = '200px';
+                    topIndicator.style.height = '4px';
+                    topIndicator.style.backgroundColor = '#000000';
+                    topIndicator.style.boxShadow = '0 0 8px #ffffff';
+                    topIndicator.style.zIndex = '1500';
+                    document.body.appendChild(topIndicator);
+                }
+                if (onBottomEdge) {
+                    const bottomIndicator = document.createElement('div');
+                    bottomIndicator.className = 'edge-indicator';
+                    bottomIndicator.style.position = 'absolute';
+                    bottomIndicator.style.left = (faceLeft) + 'px';
+                    bottomIndicator.style.top = (faceTop + faceHeight - 2) + 'px';
+                    bottomIndicator.style.width = '200px';
+                    bottomIndicator.style.height = '4px';
+                    bottomIndicator.style.backgroundColor = '#000000';
+                    bottomIndicator.style.boxShadow = '0 0 8px #ffffff';
+                    bottomIndicator.style.zIndex = '1500';
+                    document.body.appendChild(bottomIndicator);
+                }
+            }
+        }
+
+        // 在cursor移动时检查重合
+        setInterval(checkCursorOverlap, 100);
+
+
+
+
 
         // Handle touchmove event
         document.addEventListener('touchmove', function (e) {
@@ -305,7 +440,7 @@
         // Handle window load event
         window.onload = function () {
             const gridContainer = document.getElementById('grid-container');
-            const squareSize = Math.floor(Math.min(window.innerWidth, window.innerHeight) / 35);
+            const squareSize = Math.floor(Math.min(window.innerWidth, window.innerHeight) / 20);
             const squaresPerRow = Math.floor(window.innerWidth / squareSize);
             const squaresPerColumn = Math.floor(window.innerHeight / squareSize);
 
