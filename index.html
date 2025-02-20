@@ -307,9 +307,13 @@
                         face.style.width = `${initialFaceRect.width * scale}px`;
                         face.style.height = `${initialFaceRect.height * scale}px`;
                         
-                        // 更新grid尺寸
-                        grid.style.width = `${initialGridRect.width * scale}px`;
-                        grid.style.height = `${initialGridRect.height * scale}px`;
+                        // 更新squareSize
+                        const newSquareSize = squareSize * scale;
+                        const gridItems = document.querySelectorAll('.grid-item');
+                        gridItems.forEach(item => {
+                            item.style.width = `${newSquareSize}px`;
+                            item.style.height = `${newSquareSize}px`;
+                        });
                     }
                 });
 
