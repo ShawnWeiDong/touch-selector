@@ -270,6 +270,55 @@
                 snackbar.innerHTML = '<p>slide to hover over the face.</p>';
             }
 
+            // 处理多点触控缩放
+            if (e.touches.length > 1) {
+                // 获取两个触摸点
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                
+                // 计算两点之间的初始距离
+                const initialDistance = Math.hypot(
+                    touch2.clientX - touch1.clientX,
+                    touch2.clientY - touch1.clientY
+                );
+
+                // 存储初始状态
+                const face = document.querySelector('.face');
+                const grid = document.getElementById('grid-container');
+                const initialFaceRect = face.getBoundingClientRect();
+                const initialGridRect = grid.getBoundingClientRect();
+
+                // 监听touchmove事件进行缩放
+                document.addEventListener('touchmove', function handleScale(e) {
+                    if (e.touches.length > 1) {
+                        const newTouch1 = e.touches[0];
+                        const newTouch2 = e.touches[1];
+                        
+                        // 计算新的距离
+                        const newDistance = Math.hypot(
+                            newTouch2.clientX - newTouch1.clientX,
+                            newTouch2.clientY - newTouch1.clientY
+                        );
+                        
+                        // 计算缩放比例
+                        const scale = newDistance / initialDistance;
+                        
+                        // 更新face尺寸
+                        face.style.width = `${initialFaceRect.width * scale}px`;
+                        face.style.height = `${initialFaceRect.height * scale}px`;
+                        
+                        // 更新grid尺寸
+                        grid.style.width = `${initialGridRect.width * scale}px`;
+                        grid.style.height = `${initialGridRect.height * scale}px`;
+                    }
+                });
+
+                // 清理事件监听器
+                document.addEventListener('touchend', function cleanup() {
+                    document.removeEventListener('touchmove', handleScale);
+                    document.removeEventListener('touchend', cleanup);
+                });
+            }
 
             // If multi-touch, handle rectangle display and position
            /*
@@ -334,7 +383,7 @@
 
                 // 如果与任意边界重合，创建边界指示器
                 face.style.borderWidth = '2px';
-                face.style.borderStyle = 'solid';
+                face.style.borderStyle = 'solid'; 
                 face.style.borderColor = '#000000';
 
                 // 移除所有已存在的边界指示器
